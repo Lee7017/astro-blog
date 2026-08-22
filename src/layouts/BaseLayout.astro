@@ -1,0 +1,24 @@
+---
+import '../styles/global.css'
+---
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Astro Toolbox</title>
+  </head>
+  <body>
+    <header>
+      <h2>Astro Toolbox</h2>
+      <nav>
+        <a href="/">Home</a> |
+        <a href="/tools/tts">TTS</a> |
+        <a href="/blog">Blog</a>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>

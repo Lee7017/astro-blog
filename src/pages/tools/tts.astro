@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ReactTTS from '../../components/ReactTTS.jsx';
+import VueCounter from '../../components/VueCounter.vue';
+---
+
+<BaseLayout>
+  <h1>TTS 工具</h1>
+
+  <ReactTTS client:load />
+  <VueCounter client:load />
+</BaseLayout>
