@@ -1,0 +1,32 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const fmt = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+---
+
+<BaseLayout title="Blog | Astro Toolbox">
+  <div class="max-w-2xl mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-6">📝 博客</h1>
+    <ul class="space-y-4">
+      {
+        posts.map((post) => (
+          <li class="border-b pb-4">
+            <time class="text-sm text-gray-500" datetime={fmt(post.data.date)}>
+              {fmt(post.data.date)}
+            </time>
+            <br />
+            <a class="text-xl hover:underline" href={`/blog/${post.id}/`}>
+              {post.data.title}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>
