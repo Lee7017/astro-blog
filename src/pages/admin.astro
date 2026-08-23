@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AdminEditor from '../components/AdminEditor.jsx';
+---
+
+<BaseLayout title="写作 | Astro Toolbox">
+  <div class="max-w-2xl mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-6">✍️ 在线写作</h1>
+    <AdminEditor client:load />
+  </div>
+</BaseLayout>
