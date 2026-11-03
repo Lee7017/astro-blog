@@ -6,6 +6,7 @@ const posts = (await getCollection('blog')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 
+const base = import.meta.env.BASE_URL;
 const fmt = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 ---
@@ -21,7 +22,7 @@ const fmt = (d: Date) =>
               {fmt(post.data.date)}
             </time>
             <br />
-            <a class="text-xl hover:underline" href={`/blog/${post.id}/`}>
+            <a class="text-xl hover:underline" href={`${base}blog/${post.id}/`}>
               {post.data.title}
             </a>
           </li>
