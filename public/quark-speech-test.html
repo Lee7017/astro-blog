@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f7ff">
+  <title>安卓夸克 · 语音停止方式测试 v1.2</title>
+  <style>
+    :root{color-scheme:light;--bg:#f5f7ff;--fg:#18233b;--muted:#68748b;--purple:#4756ef;--border:#e4e9f4;--green:#147d58;--orange:#a66c13;--red:#b72f45}
+    *{box-sizing:border-box}body{margin:0;color:var(--fg);background:radial-gradient(ellipse 90% 30% at 50% -3%,#dfe6ff 0,transparent 100%),var(--bg);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.55}
+    main{max-width:640px;margin:auto;padding:max(24px,env(safe-area-inset-top)) 16px max(36px,env(safe-area-inset-bottom))}
+    .eyebrow{display:inline-flex;background:#e8edff;color:#4552bf;border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700}
+    h1{font-size:clamp(27px,7vw,34px);line-height:1.16;letter-spacing:-.045em;margin:16px 0 9px}
+    h2{font-size:16px;margin:0 0 14px;display:flex;gap:9px;align-items:center}
+    .intro,.hint{font-size:13px;color:var(--muted)}.intro{margin:0 0 20px}.hint{margin:10px 0 0}
+    .card{background:white;border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 8px 24px #202d5d08}
+    .num{display:inline-grid;place-items:center;font-size:12px;flex:none;background:#eef0ff;color:var(--purple);width:25px;height:25px;border-radius:7px}
+    .check{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #f1f3f8;font-size:13px}.check:first-of-type{border-top:0}
+    .tag{font-size:12px;font-weight:700;border-radius:8px;padding:3px 9px;background:#f1f2f6;color:#53617a;white-space:nowrap}.tag.good{background:#e4f7ed;color:#147d58}.tag.bad{background:#fff0f1;color:#b72f45}.tag.warn{background:#fff3df;color:#97631a}
+    button,select{font:inherit}button{border:0;cursor:pointer;touch-action:manipulation}button:disabled{cursor:not-allowed;opacity:.48}
+    .btn{min-height:46px;padding:12px;border-radius:12px;font-size:14px;font-weight:750}.primary{background:var(--purple);color:#fff}.stop{background:#fdecef;color:#a22f44}.secondary{background:#edf0fa;color:#425187}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.actions .primary{grid-column:span 2}
+    .status{background:#f3f6fc;display:flex;align-items:center;gap:9px;border-radius:11px;padding:12px;margin-bottom:13px;font-size:13px;color:#46546c}
+    .dot{width:8px;height:8px;flex:none;border-radius:50%;background:#a6afc0}.dot.active{background:#24a977;box-shadow:0 0 0 4px #dff8ee}
+    label.method{display:block;font-weight:750;font-size:13px;margin:14px 0 6px}
+    select{width:100%;border:1px solid #cfd7ec;color:var(--fg);background:white;border-radius:12px;min-height:48px;padding:10px;font-size:14px}
+    .method-help{font-size:12px;color:var(--muted);margin:8px 0 12px}
+    .resultbox{border-radius:12px;padding:13px 14px;border:1px solid #e5e9f3;background:#f8faff}
+    .resultbox.good{background:#ecfbf3;border-color:#bfead4}.resultbox.warn{background:#fff8eb;border-color:#f3dfb9}.resultbox.bad{background:#fff1f1;border-color:#f6c6ca}
+    .result-title{font-size:15px;font-weight:800;margin:0 0 5px}.result-detail{font-size:12px;color:#55637b;line-height:1.7;white-space:pre-line}
+    .minirow{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}.pill{display:inline-block;background:#e8edf7;border-radius:7px;padding:4px 8px;font-size:11px;color:#44526d}
+    .transcript{border:1px dashed #cbd3e6;background:#fbfcff;border-radius:11px;padding:13px;min-height:100px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:16px}.interim{color:#956317;border-bottom:1px dotted #d1a05a}.placeholder{color:#9ba7ba}
+    .smallactions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.smallactions button{font-size:12px;border-radius:9px;padding:8px 12px;background:#eef0ff;color:#4658a9}
+    .table-scroll{overflow:auto}.history{width:100%;border-collapse:collapse;font-size:12px;min-width:440px}.history th{text-align:left;color:#5e6980;font-weight:700;background:#f5f7fc}.history th,.history td{padding:9px 8px;border-bottom:1px solid #edf0f6;vertical-align:top}.history td:last-child{min-width:120px}.empty{text-align:center;color:#9ba7ba}
+    .logs{white-space:pre-wrap;overflow-wrap:anywhere;background:#10192d;color:#d4dff8;max-height:210px;overflow:auto;min-height:80px;border-radius:10px;padding:12px;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace}
+    details{font-size:13px;color:#596780}summary{cursor:pointer;font-weight:800;color:#334467}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#f0f2f8;border-radius:4px;padding:1px 4px}.foot{font-size:11px;text-align:center;color:#7b879e;margin:17px 0}
+    @media(max-width:380px){.card{padding:15px}.check{font-size:12px}}
+  </style>
+</head>
+<body>
+<main>
+  <span class="eyebrow">📱 安卓浏览器 · 停止方式诊断 · v1.2</span>
+  <h1>语音识别停止测试</h1>
+  <p class="intro">比较 <code>stop()</code>、<code>abort()</code> 和组合调用。重点记录浏览器是否真的发出 <code>onend</code>，避免把“网页按钮恢复”误认为“识别服务成功停止”。</p>
+
+  <section class="card">
+    <h2><span class="num">1</span> 接口检测</h2>
+    <div class="check"><span>SpeechRecognition（标准接口）</span><span id="standard" class="tag">检测中</span></div>
+    <div class="check"><span>webkitSpeechRecognition（前缀接口）</span><span id="webkit" class="tag">检测中</span></div>
+    <div class="check"><span>安全上下文（HTTPS / localhost 等）</span><span id="secure" class="tag">检测中</span></div>
+    <div class="check"><span>getUserMedia（单独的麦克风接口）</span><span id="microphone" class="tag">检测中</span></div>
+    <div class="smallactions"><button type="button" id="recheck">重新检测</button><button type="button" id="testMic">检查麦克风权限</button></div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">2</span> 启动识别并选择停止方法</h2>
+    <div class="status"><span id="dot" class="dot"></span><span id="status" role="status">正在检测…</span></div>
+    <div class="actions">
+      <button type="button" id="start" class="btn primary" disabled>🎙 开始中文识别</button>
+      <button type="button" id="stop" class="btn stop" disabled>⏹ 停止并检测</button>
+      <button type="button" id="reset" class="btn secondary">清空测试记录</button>
+    </div>
+    <label class="method" for="strategy">停止策略（下一次点击停止时使用）</label>
+    <select id="strategy">
+      <option value="auto">自动尝试：stop() → 超时后 abort()（推荐）</option>
+      <option value="onlyStop">先只测 stop()，超时后安全补救</option>
+      <option value="onlyAbort">只测 abort()</option>
+      <option value="quickCombo">快速组合：stop() → 300ms 后 abort()</option>
+    </select>
+    <p id="methodHelp" class="method-help">先等 stop() 2 秒；没有收到 onend 就再调用 abort()，最后报告是单独成功还是组合完成。</p>
+    <p class="hint">每次只能测试一个识别会话。需要对比时，重新点“开始”，说同一句话，再切换停止策略。测试结束时会自动记录成功的方法和耗时。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">3</span> 本次停止结果</h2>
+    <div id="stopResult" class="resultbox" role="status" aria-live="polite">
+      <div class="result-title">尚未执行停止测试</div>
+      <div class="result-detail">启动一次识别并点击停止，结果会出现在这里。</div>
+    </div>
+    <p class="hint">只有收到 <code>onend</code> 才标记“浏览器确认结束”。如果先 <code>stop()</code> 再 <code>abort()</code>，无法百分百判断究竟是哪一个触发了结束事件。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">4</span> 识别文字</h2>
+    <div id="transcript" class="transcript" aria-live="polite"><span class="placeholder">识别文字显示在这里…</span></div>
+    <div class="smallactions"><button type="button" id="copyText">复制文字</button><button type="button" id="clearText">清空文字</button></div>
+    <p class="hint">棕色虚线部分是临时识别结果；停止后会保留，但不算最终确认文字。</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">5</span> 历次停止测试</h2>
+    <div class="table-scroll"><table class="history"><thead><tr><th>次数</th><th>选择的策略</th><th>实际调用</th><th>结果 / 耗时</th></tr></thead><tbody id="reportRows"><tr><td colspan="4" class="empty">还没有测试记录</td></tr></tbody></table></div>
+    <div class="smallactions"><button type="button" id="copyReport">复制诊断报告</button></div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">6</span> 事件日志</h2>
+    <div id="logs" class="logs" aria-live="polite"></div>
+    <div class="smallactions"><button type="button" id="copyLog">复制日志</button><button type="button" id="clearLog">清空日志</button></div>
+    <p class="hint">可以把日志复制给我分析。注意，<code>stop()</code> 没抛异常只是“调用已发出”，不表示停止成功。</p>
+  </section>
+
+  <section class="card"><details><summary>为什么不测试 MediaStreamTrack.stop()？</summary><p>Web Speech API 自己管理麦克风音频，网页拿不到它内部的音频轨道。<code>MediaStreamTrack.stop()</code> 只能停止网页通过 <code>getUserMedia()</code> 自行取得的轨道，不保证停止 <code>SpeechRecognition</code>。因此本页面只比较真正能控制识别器的 <code>stop()</code> 和 <code>abort()</code>，并测试两种组合。</p><p>如果超时后页面解锁但手机仍显示正在使用麦克风，请关闭该标签页或刷新页面；此时不能认为识别已停止。</p></details></section>
+  <p class="foot">本页无需第三方脚本、不会主动上传录音到自建服务器；浏览器的语音识别功能本身可能连接厂商的在线服务。</p>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const timers = new Set();
+  const strategies = {
+    auto: {label:'自动 stop → abort',help:'先调用 stop()，等待 2 秒。未收到 onend 则尝试 abort()；再等 1.5 秒。'},
+    onlyStop: {label:'单测 stop()',help:'只调用 stop() 并观察 3.2 秒；若无 onend，再补救调用 abort()，但 stop() 记为超时。'},
+    onlyAbort: {label:'单测 abort()',help:'直接调用 abort()，最多等待 3 秒。abort() 会舍弃尚未返回的最终结果。'},
+    quickCombo: {label:'快速 stop → abort',help:'先调用 stop()，300 毫秒后如果没有 onend 就调用 abort()，再等待结束事件。'}
+  };
+  let rec = null, state = 'idle', seq = 0, active = null, records = [];
+  let textHistory = [], finalText = '', interimText = '';
+  function t(ms,fn) { const id=setTimeout(()=>{timers.delete(id);fn();},ms);timers.add(id);return id; }
+  function clearTimers(){ for(const id of timers)clearTimeout(id);timers.clear(); }
+  function nowTime(){return new Date().toLocaleTimeString('zh-CN',{hour12:false})}
+  function log(msg){ const e=$('logs');e.textContent+=`[${nowTime()}] ${msg}\n`;e.scrollTop=e.scrollHeight; }
+  function setStatus(msg, listening=false){$('status').textContent=msg;$('dot').className='dot'+(listening?' active':'');}
+  function setState(s){state=s;const available=!!(window.SpeechRecognition||window.webkitSpeechRecognition);$('start').disabled=s!=='idle'||!available;$('stop').disabled=s==='idle'||s==='stopping';$('stop').textContent=s==='stopping'?'检测停止中…':'⏹ 停止并检测';$('strategy').disabled=s==='stopping';}
+  function setTag(id,txt,klass){const e=$(id);e.textContent=txt;e.className='tag '+klass;}
+  function detect(){
+    const a=typeof window.SpeechRecognition==='function',b=typeof window.webkitSpeechRecognition==='function';
+    setTag('standard',a?'支持':'不支持',a?'good':'bad');setTag('webkit',b?'支持':'不支持',b?'good':'bad');
+    setTag('secure',window.isSecureContext?'是':'否',window.isSecureContext?'good':'warn');
+    const mic=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);setTag('microphone',mic?'可调用':'不可调用',mic?'good':'warn');
+    setState(state);if(state==='idle')setStatus(a||b?'接口存在，点击开始进行实际测试。':'浏览器未暴露语音识别接口。');
+    log(`能力检测：标准=${a}，webkit=${b}，安全上下文=${!!window.isSecureContext}，getUserMedia=${mic}。`);
+  }
+  function renderText(){
+    const el=$('transcript');el.replaceChildren();
+    const chunks=[...textHistory,...((finalText||interimText)?[{final:finalText,interim:interimText}]:[])];
+    if(!chunks.length){const e=document.createElement('span');e.className='placeholder';e.textContent='识别文字显示在这里…';el.append(e);return;}
+    chunks.forEach((c,i)=>{if(i)el.append(document.createTextNode('\n'));if(c.final)el.append(document.createTextNode(c.final));if(c.interim){const span=document.createElement('span');span.className='interim';span.textContent=c.interim;el.append(span);}});
+  }
+  function getText(){return [...textHistory.map(x=>x.final+x.interim),finalText+interimText].filter(Boolean).join('\n').trim();}
+  function keepText(){if(finalText||interimText)textHistory.push({final:finalText,interim:interimText});finalText='';interimText='';renderText();}
+  function addCall(s,method,reason){
+    if(!s||s!==active||s.closed)return;
+    const when=Date.now()-s.stopAt,info={method,at:when,exception:''};s.calls.push(info);
+    log(`#${s.id} 调用 ${method}（停止后 ${when}ms；${reason}）`);
+    try{s.rec[method]();log(`#${s.id} ${method}() 返回（仅证明调用没有抛异常）`)}
+    catch(e){info.exception=`${e.name}: ${e.message}`;log(`#${s.id} ${method}() 抛异常：${info.exception}`)}
+    return info;
+  }
+  function stillStopping(s){return !!(s&&!s.closed&&s===active&&rec===s.rec&&state==='stopping');}
+  function deadline(s){
+    if(!stillStopping(s))return;
+    log(`#${s.id} 到达停止测试时限，仍没有 onend。网页只解除等待；不确认底层已停止。`);
+    finalize(s,'timeout');
+  }
+  function startStop(){
+    const s=active;if(!s||!rec||state==='idle'||state==='stopping')return;
+    clearTimers();s.mode=$('strategy').value;s.stopAt=Date.now();s.stage='stopping';s.events.push('用户点击停止');
+    setState('stopping');setStatus('已发送停止请求，正在等待浏览器 onend…');
+    log(`#${s.id} 选择停止策略：${strategies[s.mode].label}。`);
+    if(s.mode==='onlyAbort'){
+      addCall(s,'abort','单独测试');t(3000,()=>deadline(s));return;
+    }
+    const call=addCall(s,'stop','第一步');
+    if(!stillStopping(s))return;
+    if(call&&call.exception){log(`#${s.id} stop() 抛异常，立即尝试 abort()。`);addCall(s,'abort','stop 异常后补救');t(1700,()=>deadline(s));return;}
+    if(s.mode==='onlyStop'){
+      t(3200,()=>{
+        if(!stillStopping(s))return;
+        s.stopOnlyTimedOut=true;s.events.push('单独 stop() 超时');
+        log(`#${s.id} stop() 在 3.2 秒内未收到 onend，标记单独 stop() 未确认；尝试 abort() 补救。`);
+        addCall(s,'abort','超时安全补救');t(1600,()=>deadline(s));
+      });return;
+    }
+    if(s.mode==='quickCombo'){
+      t(300,()=>{if(!stillStopping(s))return;addCall(s,'abort','300ms 快速组合');t(2200,()=>deadline(s));});return;
+    }
+    t(2000,()=>{
+      if(!stillStopping(s))return;
+      s.events.push('stop() 2 秒内无 onend');
+      log(`#${s.id} stop() 两秒没有收到 onend，改用 abort()。`);
+      addCall(s,'abort','自动回退');t(1500,()=>deadline(s));
+    });
+  }
+  function verdict(s,why){
+    const calls=s.calls.filter(x=>!x.exception).map(x=>x.method);
+    let title,detail,klass;
+    if(why==='onend'){
+      if(!s.stopAt){title='浏览器自行结束（未点击停止）';detail='收到了 onend，但这不是一次停止按钮测试。';klass='warn';}
+      else if(calls.length===1&&calls[0]==='stop'){title='✅ stop() 单独成功';detail='只调用了 stop()，随后收到浏览器的 onend 结束事件。';klass='good';}
+      else if(calls.length===1&&calls[0]==='abort'){title='✅ abort() 单独成功';detail='只调用了 abort()，随后收到浏览器的 onend 结束事件。';klass='good';}
+      else if(calls.includes('stop')&&calls.includes('abort')){title='✅ stop() + abort() 组合后结束';detail='已收到 onend，但不能精确证明究竟是 stop() 延迟生效，还是 abort() 让会话结束。'+(s.stopOnlyTimedOut?' 单独 stop() 在 3.2 秒内没有完成。':'');klass='good';}
+      else{title='✅ 收到 onend，识别已结束';detail='浏览器确认结束，但方法调用发生过异常，需检查日志。';klass='good';}
+    }else{
+      title='⚠️ 没有收到 onend，无法确认停止成功';
+      detail='已经过了本次测试等待时限。网页会解除按钮锁定，但浏览器底层是否仍在录音无法从这里证明。';
+      if(s.audioEnd)detail+=' 已收到 onaudioend（仅证明音频采集结束事件出现）。';
+      if(s.abortedError)detail+=' 已收到 aborted 错误（不等同于 onend）。';
+      detail+=' 如果麦克风仍亮着，请关闭标签页或刷新。';klass='bad';
+    }
+    return {title,detail,klass};
+  }
+  function renderVerdict(s,why){
+    const v=verdict(s,why),elapsed=s.stopAt?Math.max(0,Date.now()-s.stopAt):null;
+    const box=$('stopResult');box.className='resultbox '+v.klass;box.replaceChildren();
+    const a=document.createElement('div');a.className='result-title';a.textContent=v.title;
+    const b=document.createElement('div');b.className='result-detail';b.textContent=v.detail;
+    const pills=document.createElement('div');pills.className='minirow';
+    const details=[`第 ${s.id} 次识别`,s.stopAt?`策略：${strategies[s.mode]?.label}`:'自然结束',elapsed===null?'没有手动停止':`耗时：${elapsed} ms`,s.stopAt?`调用：${s.calls.map(x=>x.method+'()'+(x.exception?' [异常]':'')).join(' → ')||'无'}`:'结束事件：onend'];
+    for(const txt of details){const p=document.createElement('span');p.className='pill';p.textContent=txt;pills.append(p);}
+    box.append(a,b,pills);
+    if(s.stopAt){records.unshift({id:s.id,mode:s.mode,calls:s.calls.map(x=>({...x})),why,elapsed:elapsed??null,events:[...s.events],audioEnd:s.audioEnd,abortedError:s.abortedError,title:v.title,detail:v.detail});renderRecords();}
+    return v;
+  }
+  function renderRecords(){const tbody=$('reportRows');tbody.replaceChildren();
+    if(!records.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.className='empty';td.textContent='还没有测试记录';tr.append(td);tbody.append(tr);return;}
+    records.forEach(r=>{
+      const tr=document.createElement('tr');[String(r.id),strategies[r.mode]?.label||r.mode,r.calls.map(c=>c.method+'()'+(c.exception?' [异常]':'')).join(' → ')||'—',r.title+'\n'+r.elapsed+' ms'].forEach((val,i)=>{const td=document.createElement('td');td.textContent=val;if(i===3)td.style.whiteSpace='pre-line';tr.append(td);});tbody.append(tr);
+    });
+  }
+  function finalize(s,why){
+    if(!s||s!==active||s.closed)return;
+    s.closed=true;clearTimers();
+    if(s.stopAt){s.events.push(why==='onend'?'onend（结束确认）':'超时无 onend');}
+    const v=renderVerdict(s,why);
+    keepText();
+    const old=s.rec;for(const name of ['onstart','onaudiostart','onaudioend','onspeechstart','onspeechend','onresult','onerror','onend'])old[name]=null;
+    rec=null;active=null;setState('idle');setStatus(v.title);
+    log(`#${s.id} 结束测试：${v.title}`);
+  }
+  function start(){
+    if(state!=='idle')return;
+    const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(typeof Speech!=='function'){setStatus('浏览器没有识别接口');return;}
+    let obj;try{obj=new Speech()}catch(e){log('创建识别器异常：'+e.message);setStatus('创建识别器失败：'+e.message);return;}
+    const s={id:++seq,rec:obj,mode:'',stage:'starting',stopAt:0,calls:[],events:[],audioEnd:false,abortedError:false,stopOnlyTimedOut:false,closed:false};active=s;rec=obj;finalText='';interimText='';
+    obj.lang='zh-CN';obj.continuous=true;obj.interimResults=true;obj.maxAlternatives=1;
+    obj.onstart=()=>{if(active!==s||s.closed)return;s.events.push('onstart');if(state==='starting'){clearTimers();setState('listening');setStatus('正在听，请说一句话…',true)}log(`#${s.id} 事件 onstart`);};
+    obj.onaudiostart=()=>{if(active!==s||s.closed)return;s.events.push('onaudiostart');log(`#${s.id} 事件 onaudiostart`);};
+    obj.onaudioend=()=>{if(active!==s||s.closed)return;s.audioEnd=true;s.events.push('onaudioend');log(`#${s.id} 事件 onaudioend（音频结束，但还不能认定识别会话结束）`);};
+    obj.onspeechstart=()=>{if(active!==s||s.closed)return;s.events.push('onspeechstart');log(`#${s.id} 事件 onspeechstart`);};
+    obj.onspeechend=()=>{if(active!==s||s.closed)return;s.events.push('onspeechend');log(`#${s.id} 事件 onspeechend`);};
+    obj.onresult=e=>{
+      if(active!==s||s.closed)return;
+      if(state==='starting'){clearTimers();setState('listening');}
+      let confirmed='',temporary='';
+      for(let i=0;i<e.results.length;i++){const item=e.results[i],txt=item[0]?.transcript||'';if(item.isFinal)confirmed+=txt;else temporary+=txt;}
+      finalText=confirmed;interimText=temporary;renderText();
+      s.events.push('onresult'+(temporary?'(临时)':'(最终)'));
+      log(`#${s.id} 事件 onresult：最终字符数 ${confirmed.length}，临时字符数 ${temporary.length}`);
+      if(state!=='stopping')setStatus('收到识别文字，仍在监听…',true);
+    };
+    obj.onerror=e=>{
+      if(active!==s||s.closed)return;const code=e.error||'unknown';s.events.push('onerror('+code+')');if(code==='aborted')s.abortedError=true;
+      log(`#${s.id} 事件 onerror：${code}${e.message?' / '+e.message:''}`);
+      if(state==='stopping')return;
+      clearTimers();setStatus('识别出错：'+code+'，正在尝试结束…');
+      // onerror doesn't necessarily imply onend; attempt cleanup and give the browser a chance to fire onend.
+      if(!s.stopAt){s.stopAt=Date.now();s.mode='onlyAbort';setState('stopping');addCall(s,'abort','识别错误后的安全处理');t(2200,()=>deadline(s));}
+    };
+    obj.onend=()=>{if(active!==s||s.closed)return;s.events.push('onend');log(`#${s.id} 事件 onend（浏览器确认会话结束）`);finalize(s,'onend');};
+    setState('starting');setStatus('正在请求语音识别服务…',true);log(`#${s.id} 调用 start()，zh-CN，continuous=true。`);
+    t(10000,()=>{
+      if(active!==s||s.closed||state!=='starting')return;
+      log(`#${s.id} 启动 10 秒没有收到 onstart / onresult，尝试 abort() 清理。`);
+      s.stopAt=Date.now();s.mode='onlyAbort';setState('stopping');addCall(s,'abort','启动超时清理');t(2000,()=>deadline(s));
+    });
+    try{obj.start()}catch(e){log(`#${s.id} start() 异常：${e.name}: ${e.message}`);finalize(s,'timeout');setStatus('启动失败：'+e.message);}
+  }
+  async function copy(value,what){if(!value){log(what+'为空，无法复制');return;}try{
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);
+    else {const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();const ok=document.execCommand('copy');ta.remove();if(!ok)throw Error('复制命令失败');}
+    log('已复制'+what);
+  }catch(e){log('复制'+what+'失败：'+e.message);}}
+  const reportText=()=>['夸克浏览器语音停止诊断 v1.2','时间：'+new Date().toLocaleString('zh-CN'),'UA：'+navigator.userAgent,'安全上下文：'+window.isSecureContext,'',...records.slice().reverse().flatMap(r=>[
+    `#${r.id} ${strategies[r.mode]?.label||r.mode}`,
+    `结果：${r.title}`,
+    `停止到结束/超时：${r.elapsed} ms`,
+    `调用：${r.calls.map(c=>`${c.method}() 于 +${c.at}ms${c.exception?' 抛异常 '+c.exception:''}`).join(' -> ')}`,
+    `事件：${r.events.join(' -> ')}`,
+    `音频结束事件：${r.audioEnd}；aborted 错误：${r.abortedError}`,''])].join('\n');
+  $('start').addEventListener('click',start);
+  $('stop').addEventListener('click',startStop);
+  $('recheck').addEventListener('click',detect);
+  $('strategy').addEventListener('change',()=>{$('methodHelp').textContent=strategies[$('strategy').value].help;});
+  $('reset').addEventListener('click',()=>{records=[];renderRecords();$('stopResult').className='resultbox';$('stopResult').innerHTML='<div class="result-title">记录已清空</div><div class="result-detail">下一次停止测试会在这里显示结果。</div>';log('测试记录已清空，当前识别状态不变。');});
+  $('copyText').addEventListener('click',()=>copy(getText(),'识别文字'));
+  $('clearText').addEventListener('click',()=>{textHistory=[];finalText='';interimText='';renderText();log('已清空识别文字。');});
+  $('copyReport').addEventListener('click',()=>copy(reportText(),'诊断报告'));
+  $('copyLog').addEventListener('click',()=>copy($('logs').textContent,'事件日志'));
+  $('clearLog').addEventListener('click',()=>{$('logs').textContent='';log('已清空日志。')});
+  $('testMic').addEventListener('click',async ()=>{if(!navigator.mediaDevices?.getUserMedia){log('getUserMedia 不可用');return;}const btn=$('testMic');btn.disabled=true;try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});log('单独的麦克风权限测试成功；立即停止 getUserMedia 音轨。');stream.getTracks().forEach(track=>track.stop());}catch(e){log('麦克风权限测试失败：'+e.name+' '+e.message);}finally{btn.disabled=false;}});
+  $('methodHelp').textContent=strategies[$('strategy').value].help;
+  detect();
+})();
+</script>
+</body>
+</html>
