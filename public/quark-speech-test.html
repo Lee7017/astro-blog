@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f5f7ff">
-  <title>安卓夸克 · 语音停止方式测试 v1.3</title>
+  <title>移动端浏览器 · 语音与拍照测试 v1.4</title>
   <style>
     :root{color-scheme:light;--bg:#f5f7ff;--fg:#18233b;--muted:#68748b;--purple:#4756ef;--border:#e4e9f4;--green:#147d58;--orange:#a66c13;--red:#b72f45}
     *{box-sizing:border-box}body{margin:0;color:var(--fg);background:radial-gradient(ellipse 90% 30% at 50% -3%,#dfe6ff 0,transparent 100%),var(--bg);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.55}
@@ -35,10 +35,34 @@
     .logs{white-space:pre-wrap;overflow-wrap:anywhere;background:#10192d;color:#d4dff8;max-height:210px;overflow:auto;min-height:80px;border-radius:10px;padding:12px;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace}
     details{font-size:13px;color:#596780}summary{cursor:pointer;font-weight:800;color:#334467}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#f0f2f8;border-radius:4px;padding:1px 4px}.foot{font-size:11px;text-align:center;color:#7b879e;margin:17px 0}
     @media(max-width:380px){.card{padding:15px}.check{font-size:12px}}
+
+    [hidden]{display:none!important}
+    .tabbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#e8edfa;padding:6px;border-radius:15px;margin-bottom:18px}
+    .tabbar button{border-radius:10px;min-height:46px;background:transparent;color:#566580;font-weight:750}
+    .tabbar button[aria-selected="true"]{background:white;color:#3446c0;box-shadow:0 2px 10px #30395818}
+    .capture-choices{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+    .upload-label{display:flex;align-items:center;justify-content:center;text-align:center;min-height:48px;border-radius:12px;padding:10px 8px;font-weight:750;font-size:14px;cursor:pointer;background:#eef0ff;color:#384eb9}
+    .upload-label.camera{background:#4857e9;color:white}
+    .capture-choices input,.desktop-upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+    .camera-video{background:#101828;border-radius:13px;display:block;width:100%;max-height:350px;object-fit:contain;aspect-ratio:4/3}
+    .camera-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+    .camera-tools button{min-height:44px;padding:10px;border-radius:10px;font-size:13px;font-weight:700}
+    .preview-image{display:block;width:100%;max-height:380px;object-fit:contain;border-radius:12px;background:#f1f5fc}
+    .camera-meta{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:#4b5872;background:#f6f8fd;padding:12px;border-radius:10px;margin-top:10px;line-height:1.7}
+    .camera-info{font-size:12px;color:#66738b}
+    .camera-note{padding:12px;background:#fff7e7;border-radius:12px;font-size:12px;color:#785b25;line-height:1.7}
+    .camera-status{font-size:13px;margin:10px 0;color:#455373}
+    .desktop-upload{margin-top:12px}
   </style>
 </head>
 <body>
 <main>
+  <nav class="tabbar" role="tablist" aria-label="功能测试切换">
+    <button type="button" role="tab" id="tabVoice" data-tab="voice" aria-controls="voicePanel" aria-selected="true">🎙 语音识别</button>
+    <button type="button" role="tab" id="tabCamera" data-tab="camera" aria-controls="cameraPanel" aria-selected="false">📷 拍照与图库</button>
+  </nav>
+  <section id="voicePanel" role="tabpanel" aria-labelledby="tabVoice">
+
   <span class="eyebrow">📱 安卓浏览器 · 停止方式诊断 · v1.3</span>
   <h1>语音识别停止测试</h1>
   <p class="intro">比较 <code>stop()</code>、<code>abort()</code> 和组合调用。重点记录浏览器是否真的发出 <code>onend</code>，避免把“网页按钮恢复”误认为“识别服务成功停止”。</p>
@@ -103,6 +127,62 @@
 
   <section class="card"><details><summary>为什么不测试 MediaStreamTrack.stop()？</summary><p>Web Speech API 自己管理麦克风音频，网页拿不到它内部的音频轨道。<code>MediaStreamTrack.stop()</code> 只能停止网页通过 <code>getUserMedia()</code> 自行取得的轨道，不保证停止 <code>SpeechRecognition</code>。因此本页面只比较真正能控制识别器的 <code>stop()</code> 和 <code>abort()</code>，并测试两种组合。</p><p>如果超时后页面解锁但手机仍显示正在使用麦克风，请关闭该标签页或刷新页面；此时不能认为识别已停止。</p></details></section>
   <p class="foot">本页无需第三方脚本、不会主动上传录音到自建服务器；浏览器的语音识别功能本身可能连接厂商的在线服务。</p>
+
+  </section>
+  <section id="cameraPanel" role="tabpanel" aria-labelledby="tabCamera" hidden>
+    <span class="eyebrow">📷 iPad / 安卓 / 电脑 · v1.4</span>
+    <h1 id="cameraHeading">拍照与图库测试</h1>
+    <p class="intro" id="cameraIntro">测试浏览器调用拍照、访问图库和摄像头权限的能力。图片只在本机预览，<strong>不会上传到服务器</strong>。</p>
+    <section class="card" id="cameraDetectArea">
+      <h2><span class="num">1</span> 设备与权限检测</h2>
+      <div class="check"><span>当前设备类别</span><span class="tag" id="camDevice">检测中</span></div>
+      <div class="check"><span>HTTPS / 安全上下文</span><span class="tag" id="camSecure">检测中</span></div>
+      <div class="check"><span>getUserMedia 摄像头 API</span><span class="tag" id="camApi">检测中</span></div>
+      <div class="check"><span>摄像头权限状态</span><span class="tag" id="camPermission">检测中</span></div>
+      <p class="hint">iPad Safari 可能无法通过 Permissions API 查询摄像头权限，这不代表不能拍照。是否弹授权框要以实际点击测试为准。</p>
+    </section>
+    <section class="card" id="mobileCaptureArea" hidden>
+      <h2><span class="num">2</span> 系统拍照与图库</h2>
+      <p class="camera-info">这两种方式走手机 / iPad 的原生选择界面。网页只能读取你选中的照片，不能直接浏览整个相册。</p>
+      <div class="capture-choices">
+        <label class="upload-label camera" for="nativeCameraInput">📸 打开相机拍照</label>
+        <label class="upload-label" for="galleryInput">🖼 从图库选照片</label>
+        <input type="file" id="nativeCameraInput" accept="image/*" capture="environment" aria-label="通过系统相机拍照">
+        <input type="file" id="galleryInput" accept="image/*" aria-label="通过相册选照片">
+      </div>
+      <div class="camera-note">相机按钮通过 <code>&lt;input type="file" capture="environment"&gt;</code> 请求拍照；图库按钮不设置 <code>capture</code>。具体弹出相机还是选择菜单，由 iPadOS / 浏览器决定。网页不能强迫系统跳过选择界面。</div>
+    </section>
+    <section class="card" id="liveCameraArea" hidden>
+      <h2><span class="num">3</span> 网页实时摄像头权限</h2>
+      <p class="camera-info">另一种方法：调用 <code>getUserMedia({video:true})</code>，会向浏览器申请摄像头访问权限。拍完或离开本页会主动停止视频轨道。</p>
+      <div id="liveCameraStatus" class="camera-status">尚未申请摄像头权限</div>
+      <video id="cameraVideo" class="camera-video" autoplay muted playsinline hidden></video>
+      <div class="camera-tools">
+        <button type="button" id="openLiveCamera" class="btn primary">开启后置摄像头</button>
+        <button type="button" id="stopLiveCamera" class="btn secondary" disabled>关闭摄像头</button>
+        <button type="button" id="snapLiveCamera" class="btn secondary" disabled>拍摄当前画面</button>
+        <button type="button" id="switchLiveCamera" class="btn secondary" disabled>切换前 / 后置</button>
+      </div>
+    </section>
+    <section class="card" id="desktopUploadArea" hidden>
+      <h2><span class="num">2</span> 上传本地文件</h2>
+      <p class="camera-info">电脑端只提供文件选择，不调用摄像头。</p>
+      <div class="desktop-upload"><label class="upload-label" for="desktopFileInput">📁 选择本地文件</label><input type="file" id="desktopFileInput" aria-label="选择电脑上的文件"></div>
+    </section>
+    <section class="card">
+      <h2><span class="num" id="previewStep">4</span> 选择结果与预览</h2>
+      <div id="cameraSelectionStatus" class="camera-status">尚未选择照片或文件</div>
+      <img id="cameraPreview" class="preview-image" alt="选择的照片预览" hidden>
+      <div id="cameraMeta" class="camera-meta" hidden></div>
+      <div class="smallactions"><button type="button" id="clearCameraPreview">清空预览</button></div>
+    </section>
+    <section class="card">
+      <h2><span class="num" id="cameraLogStep">5</span> <span id="cameraLogTitle">拍照权限与操作日志</span></h2>
+      <div id="cameraLogs" class="logs" aria-live="polite"></div>
+      <div class="smallactions"><button type="button" id="copyCameraLog">复制测试报告</button><button type="button" id="clearCameraLog">清空日志</button></div>
+      <p class="hint">如果拍照时打不开相机、提示权限被拒绝，或者图库无法选取，请复制日志给我。系统选择器的取消操作可能不会触发 <code>change</code>。</p>
+    </section>
+  </section>
 </main>
 <script>
 (() => {
@@ -308,8 +388,60 @@
   $('copyLog').addEventListener('click',()=>copy($('logs').textContent,'事件日志'));
   $('clearLog').addEventListener('click',()=>{$('logs').textContent='';log('已清空日志。')});
   $('testMic').addEventListener('click',async ()=>{if(!navigator.mediaDevices?.getUserMedia){log('getUserMedia 不可用');return;}const btn=$('testMic');btn.disabled=true;try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});log('单独的麦克风权限测试成功；立即停止 getUserMedia 音轨。');stream.getTracks().forEach(track=>track.stop());}catch(e){log('麦克风权限测试失败：'+e.name+' '+e.message);}finally{btn.disabled=false;}});
+  window.addEventListener('speech-test-tab-hidden',()=>{if(active&&!active.closed&&state!=='idle'){const x=active;log(`#${x.id} 离开语音 Tab，尝试 abort() 清理识别，不能据此认定麦克风已释放`);try{x.rec.abort()}catch(e){log('切换 Tab 清理异常：'+e.name)}}});
   $('methodHelp').textContent=strategies[$('strategy').value].help;
   detect();
+})();
+</script>
+
+<script>
+(() => {
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1)||navigator.userAgentData?.mobile===true;
+  const events=[];
+  let liveStream=null,previewUrl=null,cameraRequest=0,facing='environment';
+  const mobileIds=['mobileCaptureArea','liveCameraArea'];
+  function log(m){const line='['+new Date().toLocaleTimeString('zh-CN',{hour12:false})+'] '+m;events.push(line);$('cameraLogs').textContent+=line+'\n';$('cameraLogs').scrollTop=$('cameraLogs').scrollHeight;}
+  function tag(id,text,style){const e=$(id);e.textContent=text;e.className='tag '+(style||'');}
+  function cameraActive(){return !!(liveStream&&liveStream.getVideoTracks().some(t=>t.readyState==='live'));}
+  function updateControls(){const open=cameraActive();$('openLiveCamera').disabled=open;$('stopLiveCamera').disabled=!open;$('snapLiveCamera').disabled=!open;$('switchLiveCamera').disabled=!open;$('cameraVideo').hidden=!open;}
+  function stopCamera(reason){cameraRequest++;if(liveStream){const tracks=liveStream.getTracks();tracks.forEach(t=>t.stop());log('已调用 MediaStreamTrack.stop() 释放 '+tracks.length+' 条轨道，原因：'+reason);liveStream=null;}const v=$('cameraVideo');v.pause();v.srcObject=null;$('liveCameraStatus').textContent='摄像头已关闭（网页调用轨道 stop()）';updateControls();}
+  async function openCamera(){if(liveStream){stopCamera('切换摄像头前释放');}const request=++cameraRequest;$('liveCameraStatus').textContent='正在向浏览器申请摄像头权限…';$('openLiveCamera').disabled=true;log('申请 getUserMedia(video.facingMode='+facing+')');try{
+    if(!navigator.mediaDevices?.getUserMedia)throw Object.assign(new Error('当前浏览器未提供 getUserMedia'),{name:'NotSupportedError'});
+    const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:facing}}});
+    if(request!==cameraRequest||$('cameraPanel').hidden){stream.getTracks().forEach(t=>t.stop());log('请求完成时已离开摄像头页面，立即释放返回的轨道');return;}
+    liveStream=stream;const video=$('cameraVideo');video.srcObject=stream;video.hidden=false;try{await video.play();}catch(e){log('video.play() 提示：'+e.name+' / '+e.message)}
+    const track=stream.getVideoTracks()[0],settings=track?.getSettings?.()||{};
+    $('liveCameraStatus').textContent='摄像头已开启'+(settings.width?' · '+settings.width+' × '+settings.height:'');log('getUserMedia 成功；视频轨道 '+(track?.label||'已获取'));
+    if(track)track.addEventListener('ended',()=>{if(liveStream===stream){log('浏览器触发视频轨道 ended');stopCamera('轨道自行结束')}});
+    updateControls();
+  }catch(e){if(request!==cameraRequest)return;$('liveCameraStatus').textContent='无法开启摄像头：'+e.name;log('getUserMedia 失败：'+e.name+' / '+(e.message||''));updateControls();}}
+  function preview(file,source){if(!file){log(source+'：没有选择文件（可能取消）');return;}if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null;}const img=$('cameraPreview');img.hidden=true;img.removeAttribute('src');const bytes=(file.size/1024/1024).toFixed(2);const desc='来源：'+source+'\n文件名：'+file.name+'\nMIME 类型：'+(file.type||'未知')+'\n大小：'+bytes+' MB';$('cameraMeta').hidden=false;$('cameraMeta').textContent=desc;$('cameraSelectionStatus').textContent='已取得文件（仅在当前网页预览，未上传）';log('已选文件：'+source+' / '+file.name+' / '+file.type+' / '+file.size+' bytes');
+    if(file.type.startsWith('image/')){previewUrl=URL.createObjectURL(file);img.onload=()=>{$('cameraMeta').textContent=desc+'\n图片像素：'+img.naturalWidth+' × '+img.naturalHeight;log('图片加载成功：'+img.naturalWidth+'×'+img.naturalHeight)};img.onerror=()=>{log('图片格式无法预览')};img.src=previewUrl;img.hidden=false;}
+    else{$('cameraMeta').textContent+='\n非图片文件，仅显示文件信息';}
+  }
+  function clearPreview(){if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null;const img=$('cameraPreview');img.hidden=true;img.removeAttribute('src');$('cameraMeta').hidden=true;$('cameraMeta').textContent='';$('cameraSelectionStatus').textContent='尚未选择照片或文件';for(const id of ['nativeCameraInput','galleryInput','desktopFileInput'])$(id).value='';log('已清空预览');}
+  function show(tab){const camera=tab==='camera';$('tabCamera').setAttribute('aria-selected',String(camera));$('tabVoice').setAttribute('aria-selected',String(!camera));$('cameraPanel').hidden=!camera;$('voicePanel').hidden=camera;if(!camera)stopCamera('切换回语音 Tab');if(camera)window.dispatchEvent(new Event('speech-test-tab-hidden'));if(location.hash!=='#'+tab)history.replaceState(null,'','#'+tab);}
+  for(const id of ['tabVoice','tabCamera'])$(id).addEventListener('click',()=>show(id==='tabCamera'?'camera':'voice'));
+  for(const id of mobileIds)$(id).hidden=!mobile;$('desktopUploadArea').hidden=mobile;$('cameraDetectArea').hidden=!mobile;$('previewStep').textContent=mobile?'4':'2';$('cameraLogStep').textContent=mobile?'5':'3';if(!mobile){$('cameraHeading').textContent='文件上传测试';$('cameraIntro').innerHTML='电脑端只测试浏览器选择本地文件和预览能力，<strong>不申请摄像头权限</strong>，也不上传文件。';$('cameraLogTitle').textContent='文件选择日志';}
+  tag('camDevice',mobile?(/iPad/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1)?'iPad / iPadOS':'手机 / 移动端'):'电脑', 'good');
+  tag('camSecure',isSecureContext?'是':'否',isSecureContext?'good':'bad');tag('camApi',navigator.mediaDevices?.getUserMedia?'可调用':'不可调用',navigator.mediaDevices?.getUserMedia?'good':'warn');
+  log('设备：'+(mobile?'移动端':'桌面端')+'；UA：'+navigator.userAgent);log('安全上下文：'+isSecureContext+'；getUserMedia：'+!!navigator.mediaDevices?.getUserMedia);
+  (async()=>{if(!mobile)return;if(!navigator.permissions?.query){tag('camPermission','无法查询','warn');log('浏览器不支持 Permissions API 查询');return;}try{const p=await navigator.permissions.query({name:'camera'});tag('camPermission',p.state,p.state==='granted'?'good':'warn');log('摄像头权限查询：'+p.state);p.onchange=()=>{tag('camPermission',p.state,p.state==='granted'?'good':'warn');log('摄像头权限状态变化：'+p.state)};}catch(e){tag('camPermission','无法查询','warn');log('不支持 camera 权限状态查询：'+e.name);}})();
+  $('nativeCameraInput').addEventListener('click',()=>log('已点击系统相机拍照入口（capture=environment）'));$('nativeCameraInput').addEventListener('cancel',()=>log('系统相机选择被取消或文件未改变'));$('nativeCameraInput').addEventListener('change',e=>preview(e.target.files?.[0],'系统相机（capture）'));
+  $('galleryInput').addEventListener('click',()=>log('已点击图库选择入口（不带 capture 属性）'));$('galleryInput').addEventListener('cancel',()=>log('图库选择被取消或文件未改变'));$('galleryInput').addEventListener('change',e=>preview(e.target.files?.[0],'图库（无 capture）'));
+  $('desktopFileInput').addEventListener('change',e=>preview(e.target.files?.[0],'电脑文件选择'));
+  $('openLiveCamera').addEventListener('click',openCamera);
+  $('stopLiveCamera').addEventListener('click',()=>stopCamera('用户点击关闭摄像头'));
+  $('switchLiveCamera').addEventListener('click',()=>{facing=facing==='environment'?'user':'environment';stopCamera('切换前后摄像头');openCamera()});
+  $('snapLiveCamera').addEventListener('click',()=>{const v=$('cameraVideo');if(!cameraActive()||!v.videoWidth){log('拍照失败：尚未取得摄像头画面');return;}const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);c.toBlob(blob=>{if(!blob){log('Canvas 生成图片失败');return;}const f=new File([blob],'camera-'+Date.now()+'.jpg',{type:'image/jpeg'});preview(f,'网页摄像头截图');},'image/jpeg',.9);});
+  $('clearCameraPreview').addEventListener('click',clearPreview);
+  $('copyCameraLog').addEventListener('click',async()=>{const report=['浏览器拍照与图库诊断 v1.4','时间：'+new Date().toLocaleString('zh-CN'),...events].join('\n');try{await navigator.clipboard.writeText(report);log('报告已复制');}catch(e){log('复制失败：'+e.name+'（可长按日志文本复制）')}});
+  $('clearCameraLog').addEventListener('click',()=>{events.length=0;$('cameraLogs').textContent='';log('日志已清空')});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&liveStream)stopCamera('页面进入后台')});
+  window.addEventListener('pagehide',()=>{if(liveStream)stopCamera('页面关闭')});
+  updateControls();show(location.hash==='#camera'?'camera':'voice');
 })();
 </script>
 </body>
