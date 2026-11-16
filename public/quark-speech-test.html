@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f5f7ff">
-  <title>安卓夸克 · 语音停止方式测试 v1.2</title>
+  <title>安卓夸克 · 语音停止方式测试 v1.3</title>
   <style>
     :root{color-scheme:light;--bg:#f5f7ff;--fg:#18233b;--muted:#68748b;--purple:#4756ef;--border:#e4e9f4;--green:#147d58;--orange:#a66c13;--red:#b72f45}
     *{box-sizing:border-box}body{margin:0;color:var(--fg);background:radial-gradient(ellipse 90% 30% at 50% -3%,#dfe6ff 0,transparent 100%),var(--bg);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.55}
@@ -39,7 +39,7 @@
 </head>
 <body>
 <main>
-  <span class="eyebrow">📱 安卓浏览器 · 停止方式诊断 · v1.2</span>
+  <span class="eyebrow">📱 安卓浏览器 · 停止方式诊断 · v1.3</span>
   <h1>语音识别停止测试</h1>
   <p class="intro">比较 <code>stop()</code>、<code>abort()</code> 和组合调用。重点记录浏览器是否真的发出 <code>onend</code>，避免把“网页按钮恢复”误认为“识别服务成功停止”。</p>
 
@@ -68,6 +68,7 @@
       <option value="quickCombo">快速组合：stop() → 300ms 后 abort()</option>
     </select>
     <p id="methodHelp" class="method-help">先等 stop() 2 秒；没有收到 onend 就再调用 abort()，最后报告是单独成功还是组合完成。</p>
+    <div id="startResult" class="resultbox" role="status" aria-live="polite"><div class="result-title">尚未开始识别</div><div class="result-detail">启动失败、权限拒绝、浏览器自行结束都会显示在这里，不会计为停止成功。</div></div>
     <p class="hint">每次只能测试一个识别会话。需要对比时，重新点“开始”，说同一句话，再切换停止策略。测试结束时会自动记录成功的方法和耗时。</p>
   </section>
 
@@ -75,7 +76,7 @@
     <h2><span class="num">3</span> 本次停止结果</h2>
     <div id="stopResult" class="resultbox" role="status" aria-live="polite">
       <div class="result-title">尚未执行停止测试</div>
-      <div class="result-detail">启动一次识别并点击停止，结果会出现在这里。</div>
+      <div class="result-detail">只有你亲自点击「停止并检测」，这里才显示停止测试结果。</div>
     </div>
     <p class="hint">只有收到 <code>onend</code> 才标记“浏览器确认结束”。如果先 <code>stop()</code> 再 <code>abort()</code>，无法百分百判断究竟是哪一个触发了结束事件。</p>
   </section>
@@ -155,7 +156,7 @@
   }
   function startStop(){
     const s=active;if(!s||!rec||state==='idle'||state==='stopping')return;
-    clearTimers();s.mode=$('strategy').value;s.stopAt=Date.now();s.stage='stopping';s.events.push('用户点击停止');
+    s.userStop=true;clearTimers();s.mode=$('strategy').value;s.stopAt=Date.now();s.stage='stopping';s.events.push('用户点击停止');
     setState('stopping');setStatus('已发送停止请求，正在等待浏览器 onend…');
     log(`#${s.id} 选择停止策略：${strategies[s.mode].label}。`);
     if(s.mode==='onlyAbort'){
@@ -186,7 +187,8 @@
     const calls=s.calls.filter(x=>!x.exception).map(x=>x.method);
     let title,detail,klass;
     if(why==='onend'){
-      if(!s.stopAt){title='浏览器自行结束（未点击停止）';detail='收到了 onend，但这不是一次停止按钮测试。';klass='warn';}
+      if(!s.wasStarted){title='⚠️ 收到 onend，但没有确认识别已启动';detail='本次没有收到 onstart 或 onresult；不能判定一次有效的停止测试。';klass='warn';}
+      else if(!s.stopAt){title='浏览器自行结束（未点击停止）';detail='收到了 onend，但这不是一次停止按钮测试。';klass='warn';}
       else if(calls.length===1&&calls[0]==='stop'){title='✅ stop() 单独成功';detail='只调用了 stop()，随后收到浏览器的 onend 结束事件。';klass='good';}
       else if(calls.length===1&&calls[0]==='abort'){title='✅ abort() 单独成功';detail='只调用了 abort()，随后收到浏览器的 onend 结束事件。';klass='good';}
       else if(calls.includes('stop')&&calls.includes('abort')){title='✅ stop() + abort() 组合后结束';detail='已收到 onend，但不能精确证明究竟是 stop() 延迟生效，还是 abort() 让会话结束。'+(s.stopOnlyTimedOut?' 单独 stop() 在 3.2 秒内没有完成。':'');klass='good';}
@@ -198,6 +200,18 @@
       if(s.abortedError)detail+=' 已收到 aborted 错误（不等同于 onend）。';
       detail+=' 如果麦克风仍亮着，请关闭标签页或刷新。';klass='bad';
     }
+    return {title,detail,klass};
+  }
+  function renderStartup(s,why){
+    const box=$('startResult');box.replaceChildren();
+    let title,detail,klass;
+    if(s.startupError){title='❌ '+(s.wasStarted?'识别过程中出错':'启动失败')+'：'+s.startupError;detail='这是浏览器识别错误。页面自动调用 abort() 仅用于清理，不是你点击的停止操作。'+(why==='onend'?' 已收到 onend。':' 未收到 onend，无法确认清理完成。');klass='bad';}
+    else if(s.startTimedOut){title='⚠️ 启动超时';detail='没有收到 onstart / onresult，页面尝试调用 abort() 清理。'+(why==='onend'?' 已收到 onend。':' 未收到 onend，不能确认释放麦克风。');klass='warn';}
+    else if(why==='onend'){title='ℹ️ 浏览器自行结束识别';detail=s.wasStarted?'本轮曾启动，但你没有点击停止按钮。':'没有收到 onstart 或 onresult，也没有点击停止按钮。';klass='warn';}
+    else{title='❌ 启动未成功';detail='没有完成有效的识别启动。请检查事件日志。';klass='bad';}
+    box.className='resultbox '+klass;
+    const a=document.createElement('div');a.className='result-title';a.textContent=title;
+    const b=document.createElement('div');b.className='result-detail';b.textContent=detail;box.append(a,b);
     return {title,detail,klass};
   }
   function renderVerdict(s,why){
@@ -222,7 +236,7 @@
     if(!s||s!==active||s.closed)return;
     s.closed=true;clearTimers();
     if(s.stopAt){s.events.push(why==='onend'?'onend（结束确认）':'超时无 onend');}
-    const v=renderVerdict(s,why);
+    const v=s.userStop?renderVerdict(s,why):renderStartup(s,why);
     keepText();
     const old=s.rec;for(const name of ['onstart','onaudiostart','onaudioend','onspeechstart','onspeechend','onresult','onerror','onend'])old[name]=null;
     rec=null;active=null;setState('idle');setStatus(v.title);
@@ -233,16 +247,18 @@
     const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(typeof Speech!=='function'){setStatus('浏览器没有识别接口');return;}
     let obj;try{obj=new Speech()}catch(e){log('创建识别器异常：'+e.message);setStatus('创建识别器失败：'+e.message);return;}
-    const s={id:++seq,rec:obj,mode:'',stage:'starting',stopAt:0,calls:[],events:[],audioEnd:false,abortedError:false,stopOnlyTimedOut:false,closed:false};active=s;rec=obj;finalText='';interimText='';
+    const s={id:++seq,rec:obj,mode:'',stage:'starting',stopAt:0,calls:[],events:[],audioEnd:false,abortedError:false,stopOnlyTimedOut:false,closed:false,userStop:false,wasStarted:false,startupError:'',startTimedOut:false};active=s;rec=obj;finalText='';interimText='';
+    $('startResult').className='resultbox';$('startResult').innerHTML='<div class="result-title">正在启动…</div><div class="result-detail">等待浏览器 onstart / onresult 或错误事件。</div>';
+    $('stopResult').className='resultbox';$('stopResult').innerHTML='<div class="result-title">尚未点击停止</div><div class="result-detail">只有手动点击停止按钮，才会记录停止方法的成功或失败。</div>';
     obj.lang='zh-CN';obj.continuous=true;obj.interimResults=true;obj.maxAlternatives=1;
-    obj.onstart=()=>{if(active!==s||s.closed)return;s.events.push('onstart');if(state==='starting'){clearTimers();setState('listening');setStatus('正在听，请说一句话…',true)}log(`#${s.id} 事件 onstart`);};
+    obj.onstart=()=>{if(active!==s||s.closed)return;s.wasStarted=true;s.events.push('onstart');$('startResult').className='resultbox good';$('startResult').innerHTML='<div class="result-title">✅ 收到 onstart，识别已启动</div><div class="result-detail">现在可以说话，再点击停止按钮进行测试。</div>';if(state==='starting'){clearTimers();setState('listening');setStatus('正在听，请说一句话…',true)}log(`#${s.id} 事件 onstart`);};
     obj.onaudiostart=()=>{if(active!==s||s.closed)return;s.events.push('onaudiostart');log(`#${s.id} 事件 onaudiostart`);};
     obj.onaudioend=()=>{if(active!==s||s.closed)return;s.audioEnd=true;s.events.push('onaudioend');log(`#${s.id} 事件 onaudioend（音频结束，但还不能认定识别会话结束）`);};
     obj.onspeechstart=()=>{if(active!==s||s.closed)return;s.events.push('onspeechstart');log(`#${s.id} 事件 onspeechstart`);};
     obj.onspeechend=()=>{if(active!==s||s.closed)return;s.events.push('onspeechend');log(`#${s.id} 事件 onspeechend`);};
     obj.onresult=e=>{
-      if(active!==s||s.closed)return;
-      if(state==='starting'){clearTimers();setState('listening');}
+      if(active!==s||s.closed)return;s.wasStarted=true;
+      if(state==='starting'){clearTimers();setState('listening');$('startResult').className='resultbox good';$('startResult').innerHTML='<div class="result-title">✅ 收到 onresult，识别已产生结果</div><div class="result-detail">识别已经工作，可以点击停止按钮测试。</div>'; }
       let confirmed='',temporary='';
       for(let i=0;i<e.results.length;i++){const item=e.results[i],txt=item[0]?.transcript||'';if(item.isFinal)confirmed+=txt;else temporary+=txt;}
       finalText=confirmed;interimText=temporary;renderText();
@@ -252,9 +268,11 @@
     };
     obj.onerror=e=>{
       if(active!==s||s.closed)return;const code=e.error||'unknown';s.events.push('onerror('+code+')');if(code==='aborted')s.abortedError=true;
+      if(!s.userStop && !s.startupError)s.startupError=code;
       log(`#${s.id} 事件 onerror：${code}${e.message?' / '+e.message:''}`);
       if(state==='stopping')return;
-      clearTimers();setStatus('识别出错：'+code+'，正在尝试结束…');
+      clearTimers();setStatus('识别出错：'+code+'，正在尝试清理…');
+      $('startResult').className='resultbox bad';$('startResult').innerHTML='<div class="result-title"></div><div class="result-detail">错误已经发生，正在清理识别会话；清理不是停止测试。</div>';$('startResult').firstChild.textContent=(s.wasStarted?'识别过程中出错：':'启动失败：')+code;
       // onerror doesn't necessarily imply onend; attempt cleanup and give the browser a chance to fire onend.
       if(!s.stopAt){s.stopAt=Date.now();s.mode='onlyAbort';setState('stopping');addCall(s,'abort','识别错误后的安全处理');t(2200,()=>deadline(s));}
     };
@@ -263,16 +281,16 @@
     t(10000,()=>{
       if(active!==s||s.closed||state!=='starting')return;
       log(`#${s.id} 启动 10 秒没有收到 onstart / onresult，尝试 abort() 清理。`);
-      s.stopAt=Date.now();s.mode='onlyAbort';setState('stopping');addCall(s,'abort','启动超时清理');t(2000,()=>deadline(s));
+      s.startTimedOut=true;s.stopAt=Date.now();s.mode='onlyAbort';setState('stopping');addCall(s,'abort','启动超时清理');t(2000,()=>deadline(s));
     });
-    try{obj.start()}catch(e){log(`#${s.id} start() 异常：${e.name}: ${e.message}`);finalize(s,'timeout');setStatus('启动失败：'+e.message);}
+    try{obj.start()}catch(e){log(`#${s.id} start() 异常：${e.name}: ${e.message}`);s.startupError=e.name+': '+e.message;finalize(s,'timeout');}
   }
   async function copy(value,what){if(!value){log(what+'为空，无法复制');return;}try{
     if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);
     else {const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();const ok=document.execCommand('copy');ta.remove();if(!ok)throw Error('复制命令失败');}
     log('已复制'+what);
   }catch(e){log('复制'+what+'失败：'+e.message);}}
-  const reportText=()=>['夸克浏览器语音停止诊断 v1.2','时间：'+new Date().toLocaleString('zh-CN'),'UA：'+navigator.userAgent,'安全上下文：'+window.isSecureContext,'',...records.slice().reverse().flatMap(r=>[
+  const reportText=()=>['夸克浏览器语音停止诊断 v1.3','时间：'+new Date().toLocaleString('zh-CN'),'UA：'+navigator.userAgent,'安全上下文：'+window.isSecureContext,'',...records.slice().reverse().flatMap(r=>[
     `#${r.id} ${strategies[r.mode]?.label||r.mode}`,
     `结果：${r.title}`,
     `停止到结束/超时：${r.elapsed} ms`,
